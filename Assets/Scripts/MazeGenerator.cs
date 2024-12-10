@@ -12,10 +12,6 @@ public class Cell
 {
 	public Vector2 position;
 	public CellType cellType;
-	public int gCost; //Cost from start to current
-	public int hCost; //Heuristic Cost
-
-	public Cell parent; //Used for backtrace
 	public bool isPitStop;
 	public Vector2 pitStopDirection;
 	public Cell(Vector2 position)
@@ -24,14 +20,7 @@ public class Cell
 		isPitStop = false;
 		cellType = CellType.wall;
 	}
-	//Total cost
-	public int fCost
-	{
-		get
-		{
-			return gCost + hCost;
-		}
-	}
+
 }
 public class MazeGenerator : MonoBehaviour
 {
@@ -40,13 +29,13 @@ public class MazeGenerator : MonoBehaviour
 	[SerializeField] private GameObject wallPrefab;
 	[SerializeField] private GameObject pathPrefab;
 	[SerializeField] private GameObject exitPrefab;
-	[SerializeField] private GameObject highlightedCellPrefab;
 	public Cell[,] grid {get; private set;}
-	[SerializeField] private float cellSize;
-	[SerializeField] private Transform mazeParentObj;
+	public float cellSize;
+	public Transform mazeParentObj;
 	public List<Cell> path = new List<Cell>();
 	public Vector2 startPosition {get; private set;}
-	private Vector2Int end;
+	public Vector2Int end;
+	public Vector2Int start;
 	
 
 	private Vector2Int[] directions = new Vector2Int[]
@@ -72,7 +61,7 @@ public class MazeGenerator : MonoBehaviour
 		
 
 		//Start the maze generation from a random odd cell
-		Vector2Int start = new Vector2Int(Random.Range(1, width - 1), Random.Range(1, height - 1));
+		start = new Vector2Int(Random.Range(1, width - 1), Random.Range(1, height - 1));
 
 		if (start.x % 2 == 0) start.x += 1;
 		if (start.y % 2 == 0) start.y += 1;
@@ -127,40 +116,25 @@ public class MazeGenerator : MonoBehaviour
 
 	}
 	
-	public List<Cell> GetNeighbors(Cell cell)
-	{
-		List<Cell> neighbors = new List<Cell>();
-
-		int x = (int)cell.position.x;
-		int y = (int)cell.position.y;
-
-		// Check only orthogonal directions (no diagonals)
-		if (x > 0) neighbors.Add(grid[x - 1, y]); // Left
-		if (x < width - 1) neighbors.Add(grid[x + 1, y]); // Right
-		if (y > 0) neighbors.Add(grid[x, y - 1]); // Down
-		if (y < height - 1) neighbors.Add(grid[x, y + 1]); // Up
-
-		return neighbors;
-	}
 	
 
 	private void DFS(Vector2Int current)
 	{
-		grid[current.x, current.y].cellType = CellType.path; // Mark the current cell as part of the maze
+		grid[current.x, current.y].cellType = CellType.path; //Mark the current cell as part of the maze
 
-		// Shuffle directions for randomness
+		//Shuffle directions for randomness
 		ShuffleDirections();
 
 		foreach (Vector2Int dir in directions)
 		{
 			Vector2Int neighbor = current + dir;
 
-			// Check if the neighbor is within bounds and unvisited
+			//Check if the neighbor is within bounds and unvisited
 			if (CheckIfInBounds(neighbor))
 			{
 				if (grid[neighbor.x, neighbor.y].cellType == CellType.wall)
 				{
-					// Break the wall between current and neighbor
+					//Break the wall between current and neighbor
 					Vector2Int wall = current + dir / 2;
 					grid[wall.x, wall.y].cellType = CellType.path;
 
@@ -181,14 +155,6 @@ public class MazeGenerator : MonoBehaviour
 		}
 	}
 	
-	public void DrawPathfindingPath()
-	{
-		foreach(Cell cell in path)
-		{
-			Debug.Log(cell.position.x + ", " + cell.position.y);
-			Instantiate(highlightedCellPrefab, new Vector2(cell.position.x * cellSize + mazeParentObj.position.x, cell.position.y * cellSize + mazeParentObj.position.y), Quaternion.identity);
-		}
-	}
 
 	public void DrawMaze()
 	{

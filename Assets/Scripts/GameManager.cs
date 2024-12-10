@@ -22,6 +22,11 @@ public class GameManager : MonoBehaviour
 	{
 		streak++;
 	}
+	
+	public void ResetStreak()
+	{
+		streak = 0;
+	}
 
 	public void ReloadScene()
 	{
