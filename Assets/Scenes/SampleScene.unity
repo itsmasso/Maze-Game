@@ -387,6 +387,7 @@ MonoBehaviour:
   width: 31
   height: 31
   cellPrefab: {fileID: 1561564533001810409, guid: a6e673ef138586f4cbb629719f7300ef, type: 3}
+  pathPrefab: {fileID: 1561564533001810409, guid: f78c378ddbc11e94c9ab2843c2133abf, type: 3}
   cellSize: 1
 --- !u!1 &2078295312
 GameObject:
@@ -399,7 +400,7 @@ GameObject:
   - component: {fileID: 2078295314}
   - component: {fileID: 2078295313}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: AStar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -417,6 +418,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d751276039930547a3bda20e5001dab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mazeGenerator: {fileID: 1002466667}
 --- !u!4 &2078295314
 Transform:
   m_ObjectHideFlags: 0
