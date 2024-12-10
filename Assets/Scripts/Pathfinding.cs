@@ -1,11 +1,11 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public class Pathfinding : MonoBehaviour
 {
-    [SerializeField]
-    private MazeGenerator mazeGenerator; //Reference to maze
-
+    [SerializeField] private MazeGenerator mazeGenerator; //Reference to maze
+    [SerializeField] private GameObject pathPrefab;
     public Cell[,] grid;
 
     public Cell goal;
@@ -118,5 +118,17 @@ public class Pathfinding : MonoBehaviour
 
         path.Reverse();
         mazeGenerator.path = path;
+        DrawPath(path);
+    }
+
+    private void DrawPath(List<Cell> path)
+    {
+        foreach (Cell element in path)
+        {
+            Instantiate(pathPrefab, new Vector2(element.position.x, element.position.y), Quaternion.identity);
+         
+        }
+
+   
     }
 }

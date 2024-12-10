@@ -38,7 +38,6 @@ public class MazeGenerator : MonoBehaviour
 	public int width = 21; // Must be odd for proper maze generation
 	public int height = 21; // Must be odd for proper maze generation
 	[SerializeField] private GameObject cellPrefab;
-    [SerializeField] private GameObject pathPrefab;
 
     private Cell[,] grid;
 	[SerializeField] private float cellSize;
@@ -170,14 +169,7 @@ public class MazeGenerator : MonoBehaviour
 		{
 			for (int y = 0; y < height; y++)
 			{
-                if (path != null)
-                {
-					Debug.Log("Check");
-                    if (path.Contains(grid[x, y]))
-                    {
-                        Instantiate(pathPrefab, new Vector2(x , y), Quaternion.identity);
-                    }
-                }
+                
         
                 if (grid[x, y].cellType == CellType.wall) // Draw walls
 				{	
