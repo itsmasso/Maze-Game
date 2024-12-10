@@ -11,11 +11,26 @@ public class Cell
 {
 	public Vector2 position;
 	public CellType cellType;
+
+	public int gCost; //
+	public int hCost; //Heuristic Cost
+
+	public Cell parent;
+
 	public Cell(Vector2 position)
 	{
 		this.position = position;
 
 		cellType = CellType.wall;
+	}
+
+	//Total Cost
+    public int fCost 
+	{
+		get
+		{
+			return gCost + hCost;
+		}
 	}
 }
 public class MazeGenerator : MonoBehaviour
@@ -23,7 +38,9 @@ public class MazeGenerator : MonoBehaviour
 	public int width = 21; // Must be odd for proper maze generation
 	public int height = 21; // Must be odd for proper maze generation
 	[SerializeField] private GameObject cellPrefab;
-	private Cell[,] grid;
+    [SerializeField] private GameObject pathPrefab;
+
+    private Cell[,] grid;
 	[SerializeField] private float cellSize;
 
 	private Vector2Int[] directions = new Vector2Int[]
@@ -34,7 +51,7 @@ public class MazeGenerator : MonoBehaviour
 		new Vector2Int(-2, 0)  // Left
 	};
 
-	void Start()
+    void Awake()
 	{
 		GenerateMaze();
 		DrawMaze();
@@ -80,8 +97,33 @@ public class MazeGenerator : MonoBehaviour
 			}
 		}
 	}
+    public List<Cell> GetNeighbors(Cell cell)
+    {
+		List<Cell> neighbors = new();
 
-	void DFS(Vector2Int current)
+		for (int x = -1; x <= 1; x++)
+		{
+			for (int y = -1; y <= 1; y++)
+			{
+				if (x == 0 && y == 0) continue;
+
+				float checkX = cell.position.x + x;
+                float checkY = cell.position.y + y;
+
+				if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
+				{
+					neighbors.Add(grid[(int)checkX, (int)checkY]);
+				}
+
+            }
+        }
+
+		return neighbors;
+    }
+
+	public List<Cell> path;
+
+    void DFS(Vector2Int current)
 	{
 		grid[current.x, current.y].cellType = CellType.path; // Mark the current cell as part of the maze
 
@@ -106,8 +148,12 @@ public class MazeGenerator : MonoBehaviour
 			}
 		}
 	}
+    public Cell[,] GetGrid()
+    {
+        return grid;  // Exposes the grid
+    }
 
-	void ShuffleDirections()
+    void ShuffleDirections()
 	{
 		for (int i = 0; i < directions.Length; i++)
 		{
@@ -124,10 +170,18 @@ public class MazeGenerator : MonoBehaviour
 		{
 			for (int y = 0; y < height; y++)
 			{
-				if (grid[x, y].cellType == CellType.wall) // Draw walls
+                if (path != null)
+                {
+					Debug.Log("Check");
+                    if (path.Contains(grid[x, y]))
+                    {
+                        Instantiate(pathPrefab, new Vector2(x , y), Quaternion.identity);
+                    }
+                }
+        
+                if (grid[x, y].cellType == CellType.wall) // Draw walls
 				{	
 					Instantiate(cellPrefab, new Vector2(x * cellSize, y * cellSize), Quaternion.identity);
-
 				}
 			}
 		}
