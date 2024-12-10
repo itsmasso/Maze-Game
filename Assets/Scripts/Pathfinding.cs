@@ -4,7 +4,7 @@ using UnityEngine;
 public class Pathfinding : MonoBehaviour
 {
     [SerializeField]
-    private MazeGenerator mazeGenerator;
+    private MazeGenerator mazeGenerator; //Reference to maze
 
     public Cell[,] grid;
 
@@ -15,38 +15,50 @@ public class Pathfinding : MonoBehaviour
     {
         SetGrid();
     }
+
+    //Constantly running to find the best path from start to goal (start will be player pos and will change)
     private void Update()
     {
         FindPath();
     }
 
+
     private void SetGrid()
     {
+        //Initializes Goal and Start
         grid = mazeGenerator.GetGrid();
-        goal = grid[29, 30]; //Goal Cell is always at this position, maze gen randomizes wall path
+        goal = grid[29, 30]; //Goal Cell is always at this position (atm)
         start = grid[0, 1]; //Start Cell
     }
 
+    //A* Algorithm that finds best path to goal
     void FindPath()
     {
-        List<Cell> openSet = new();
-        HashSet<Cell> closeSet = new();
+        List<Cell> unexploredSet = new();
+        HashSet<Cell> exploredSet = new();
 
-        openSet.Add(start);
+        unexploredSet.Add(start);
         
-        while (openSet.Count > 0)
-        {
-            Cell currentElement = openSet[0];
-            for (int i = 1; i < openSet.Count; i++)
+        while (unexploredSet.Count > 0)
+        {    
+            // Select the element with the lowest fCost from the openSet
+            Cell currentElement = unexploredSet[0];
+
+            for (int i = 1; i < unexploredSet.Count; i++)
             {
-                if (openSet[i].fCost < currentElement.fCost || openSet[i].fCost == currentElement.fCost && openSet[i].hCost < currentElement.hCost)
+                // Compare current element's fCost with the next element's fCost and hCost
+                if (unexploredSet[i].fCost < currentElement.fCost || unexploredSet[i].fCost == currentElement.fCost && unexploredSet[i].hCost < currentElement.hCost)
                 {
-                    currentElement = openSet[i];
+                    currentElement = unexploredSet[i]; // Updates when new element has better cost 
                 }
             }
-            openSet.Remove(currentElement);
-            closeSet.Add(currentElement);
+            //Remove best node from openSet
+            unexploredSet.Remove(currentElement);
 
+            //Adds it to the explored set
+            exploredSet.Add(currentElement);
+
+            //If goal reached, retrace path
             if (currentElement == goal)
             {
                 RetracePath(start, goal);
@@ -54,27 +66,33 @@ public class Pathfinding : MonoBehaviour
                 return;
             }
 
+            //Checks adjacent cells
             foreach (Cell neighbor in mazeGenerator.GetNeighbors(currentElement))
             {
-                if (!neighbor.cellType.Equals(goal.cellType) || closeSet.Contains(neighbor)) continue;
+                //Skips neighbor if its been explored or if its a wall
+                if (!neighbor.cellType.Equals(goal.cellType) || exploredSet.Contains(neighbor)) continue;
 
+                //Calculated gcost
                 float newMovementCostToNeighbor = currentElement.gCost + GetDistance(currentElement, neighbor);
 
-                if (newMovementCostToNeighbor < neighbor.gCost || !openSet.Contains(neighbor))
+                //Checks if cheaper path through neighbor
+                if (newMovementCostToNeighbor < neighbor.gCost || !unexploredSet.Contains(neighbor))
                 {
                     neighbor.gCost = (int)newMovementCostToNeighbor;
                     neighbor.hCost = (int)GetDistance(neighbor, goal);
-                    neighbor.parent = currentElement;
+                    neighbor.parent = currentElement; // Current element becomes parent of neighbor (it leads to it)
 
-                    if(!openSet.Contains(neighbor))
+                    //Adds to unexplored if it hasn't been explored
+                    if(!unexploredSet.Contains(neighbor))
                     {
-                        openSet.Add(neighbor);
+                        unexploredSet.Add(neighbor);
                     }
                 }
             }
         }
     }
 
+    //Gets Manhattan distance between two points with weights against diagonal movement
     float GetDistance(Cell cellA, Cell cellB)
     {
         float distanceX = Mathf.Abs(cellA.position.x - cellB.position.x);
@@ -86,6 +104,7 @@ public class Pathfinding : MonoBehaviour
         return 14*distanceX + 10 * (distanceY - distanceX);
     }
 
+    //Retraces best path from end to start
     void RetracePath(Cell start,  Cell end)
     {
         List<Cell> path = new();

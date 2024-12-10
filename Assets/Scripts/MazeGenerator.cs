@@ -12,10 +12,10 @@ public class Cell
 	public Vector2 position;
 	public CellType cellType;
 
-	public int gCost; //
+	public int gCost; //Cost from start to current
 	public int hCost; //Heuristic Cost
 
-	public Cell parent;
+	public Cell parent; //Used for backtrace
 
 	public Cell(Vector2 position)
 	{
