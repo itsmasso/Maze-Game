@@ -4,6 +4,8 @@ using UnityEngine;
 public class LevelManager : MonoBehaviour
 {
 	[SerializeField] private MazeGenerator mazeGenerator;
+	[SerializeField] private Pathfinding pathFinder;
+	private bool findPath;
 	[SerializeField] private GameObject player;
 	[SerializeField] private float timerDuration = 60f; // Total duration in seconds
 	private float timeRemaining;
@@ -14,9 +16,6 @@ public class LevelManager : MonoBehaviour
 	
 	void Start()
 	{
-
-		mazeGenerator.GenerateMaze();
-		mazeGenerator.DrawMaze();
 
 		player.transform.position = mazeGenerator.startPosition;
 		timeRemaining = timerDuration; // Set initial time
@@ -44,8 +43,10 @@ public class LevelManager : MonoBehaviour
 				timeRemaining = 0;
 				isTimerRunning = false;
 				UpdateTimerUI(); // Ensure it shows 00:00 when finished
+				pathFinder.SetGrid(player.GetComponent<PlayerMovement>().cellPosition);
+				pathFinder.FindPath();
 				GameManager.instance.ResetStreak();
-				GameManager.instance.ReloadScene();
+	
 			}
 		}
 	}

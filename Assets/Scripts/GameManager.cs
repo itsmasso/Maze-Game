@@ -6,6 +6,7 @@ public class GameManager : MonoBehaviour
 {
 	public static GameManager instance {get; private set;}
 	public int streak;
+
 	public void Awake() {
 		streak = 0;
 		if(instance != null)
@@ -22,6 +23,7 @@ public class GameManager : MonoBehaviour
 	{
 		streak++;
 	}
+	
 	
 	public void ResetStreak()
 	{

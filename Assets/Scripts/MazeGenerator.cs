@@ -12,23 +12,36 @@ public class Cell
 {
 	public Vector2 position;
 	public CellType cellType;
-	public bool isPitStop;
-	public Vector2 pitStopDirection;
+	
+	public int gCost; //Cost from start to current
+	public int hCost; //Heuristic Cost
+
+	public Cell parent; //Used for backtrace
+	
 	public Cell(Vector2 position)
 	{
 		this.position = position;
-		isPitStop = false;
+
 		cellType = CellType.wall;
+	}
+	
+	public int fCost 
+	{
+		get
+		{
+			return gCost + hCost;
+		}
 	}
 
 }
 public class MazeGenerator : MonoBehaviour
 {
-	[SerializeField] private int width = 21; // Must be odd for proper maze generation
-	[SerializeField] private int height = 21; // Must be odd for proper maze generation
+	public int width = 21; // Must be odd for proper maze generation
+	public int height = 21; // Must be odd for proper maze generation
+	
 	[SerializeField] private GameObject wallPrefab;
-	[SerializeField] private GameObject pathPrefab;
 	[SerializeField] private GameObject exitPrefab;
+	[SerializeField] private GameObject worldCellPrefab;
 	public Cell[,] grid {get; private set;}
 	public float cellSize;
 	public Transform mazeParentObj;
@@ -37,7 +50,14 @@ public class MazeGenerator : MonoBehaviour
 	public Vector2Int end;
 	public Vector2Int start;
 	
-
+	private void Start() {
+		height += GameManager.instance.streak;
+		width += GameManager.instance.streak;
+		if (height % 2 == 0) height += 1;
+		if (width  % 2 == 0) width += 1;
+		GenerateMaze();
+		DrawMaze();
+	}
 	private Vector2Int[] directions = new Vector2Int[]
 	{
 		new Vector2Int(0, 2),  // Up
@@ -45,6 +65,7 @@ public class MazeGenerator : MonoBehaviour
 		new Vector2Int(2, 0),  // Right
 		new Vector2Int(-2, 0)  // Left
 	};
+	
 
 	public void GenerateMaze()
 	{
@@ -80,33 +101,6 @@ public class MazeGenerator : MonoBehaviour
 		//spawn the exit prefab
 		Instantiate(exitPrefab, new Vector2(end.x * cellSize + mazeParentObj.position.x, end.y * cellSize + mazeParentObj.position.y), Quaternion.identity);
 		
-		//determine which cells are supposed to be pitstops for the player to stop on
-		for (int x = 0; x < width; x++)
-		{
-			for (int y = 0; y < height; y++)
-			{
-				if (grid[x, y].cellType == CellType.path) 
-				{	
-					Cell currentCell = grid[x, y];
-					
-					//Neighbor checks
-					bool leftIsWall = x > 0 && grid[x - 1, y].cellType == CellType.wall;
-					bool rightIsWall = x < width - 1 && grid[x + 1, y].cellType == CellType.wall;
-					bool topIsWall = y < height - 1 && grid[x, y + 1].cellType == CellType.wall;
-					bool bottomIsWall = y > 0 && grid[x, y - 1].cellType == CellType.wall;
-
-
-					bool isHorizontalPitStop = leftIsWall && rightIsWall && !topIsWall && !bottomIsWall;
-					bool isVerticalPitStop = topIsWall && bottomIsWall && !leftIsWall && !rightIsWall;
-
-					if (!isHorizontalPitStop && !isVerticalPitStop)
-					{
-						currentCell.isPitStop = true;
-					}
-							
-				}
-			}
-		}
 		
 	}
 	
@@ -116,6 +110,30 @@ public class MazeGenerator : MonoBehaviour
 
 	}
 	
+	public List<Cell> GetNeighbors(Cell cell)
+	{
+		List<Cell> neighbors = new();
+
+		for (int x = -1; x <= 1; x++)
+		{
+			for (int y = -1; y <= 1; y++)
+			{
+				if (x == 0 && y == 0) continue;
+
+				float checkX = cell.position.x + x;
+				float checkY = cell.position.y + y;
+				if (Mathf.Abs(x) + Mathf.Abs(y) == 2) continue;
+
+				if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
+				{
+					neighbors.Add(grid[(int)checkX, (int)checkY]);
+				}
+
+			}
+		}
+
+		return neighbors;
+	}
 	
 
 	private void DFS(Vector2Int current)
@@ -143,6 +161,11 @@ public class MazeGenerator : MonoBehaviour
 			}
 		}
 	}
+	
+	public Cell[,] GetGrid()
+	{
+		return grid;  // Exposes the grid
+	}
 
 	private void ShuffleDirections()
 	{
@@ -169,17 +192,10 @@ public class MazeGenerator : MonoBehaviour
 					wall.transform.parent = mazeParentObj.transform;
 
 				}
-				else
-				{
-					GameObject path = Instantiate(pathPrefab, new Vector2(x * cellSize + mazeParentObj.position.x, y * cellSize + mazeParentObj.position.y), Quaternion.identity);
-					path.transform.parent = mazeParentObj.transform;
-					if(grid[x, y].isPitStop)
-					{
-						path.GetComponent<PathCell>().ChangeToPitstop();
-					}
-					
-					
-				}
+	
+				GameObject worldCell = Instantiate(worldCellPrefab, new Vector2(x * cellSize + mazeParentObj.position.x, y * cellSize + mazeParentObj.position.y), Quaternion.identity);
+				worldCell.GetComponent<WorldCells>().positionInListX = x;
+				worldCell.GetComponent<WorldCells>().positionInListY = y;
 			}
 		}
 	}
