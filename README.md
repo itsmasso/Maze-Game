@@ -1,5 +1,7 @@
 ## Pathfinding.cs
-File responsible for the A* Algorithm Code. 
+File responsible for the A* Algorithm Code.
+
+Open Source Contribution: https://www.youtube.com/watch?v=mZfyt03LDH4
 
 ### SetGrid Method: 
 -  Initializes goal and start positions
