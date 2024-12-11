@@ -12,6 +12,12 @@ public class Cell
 {
 	public Vector2 position;
 	public CellType cellType;
+
+	public int gCost; //Cost from start to current
+	public int hCost; //Heuristic Cost
+
+	public Cell parent; //Used for backtrace
+
 	public bool isPitStop;
 	public Vector2 pitStopDirection;
 	public Cell(Vector2 position)
@@ -20,6 +26,16 @@ public class Cell
 		isPitStop = false;
 		cellType = CellType.wall;
 	}
+
+	//Total Cost
+    public int fCost 
+	{
+		get
+		{
+			return gCost + hCost;
+		}
+	}
+}
 
 }
 public class MazeGenerator : MonoBehaviour
@@ -45,6 +61,12 @@ public class MazeGenerator : MonoBehaviour
 		new Vector2Int(2, 0),  // Right
 		new Vector2Int(-2, 0)  // Left
 	};
+
+    void Awake()
+	{
+		GenerateMaze();
+		DrawMaze();
+	}
 
 	public void GenerateMaze()
 	{
@@ -109,7 +131,32 @@ public class MazeGenerator : MonoBehaviour
 		}
 		
 	}
-	
+    public List<Cell> GetNeighbors(Cell cell)
+    {
+		List<Cell> neighbors = new();
+
+		for (int x = -1; x <= 1; x++)
+		{
+			for (int y = -1; y <= 1; y++)
+			{
+				if (x == 0 && y == 0) continue;
+
+				float checkX = cell.position.x + x;
+                float checkY = cell.position.y + y;
+
+				if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height)
+				{
+					neighbors.Add(grid[(int)checkX, (int)checkY]);
+				}
+
+            }
+        }
+
+		return neighbors;
+    }
+
+	public List<Cell> path;
+
 	private bool CheckIfInBounds(Vector2Int cell)
 	{
 		return cell.x > 0 && cell.x < width - 1 && cell.y > 0 && cell.y < height - 1;
@@ -143,6 +190,11 @@ public class MazeGenerator : MonoBehaviour
 			}
 		}
 	}
+    public Cell[,] GetGrid()
+    {
+        return grid;  // Exposes the grid
+    }
+
 
 	private void ShuffleDirections()
 	{
@@ -162,8 +214,11 @@ public class MazeGenerator : MonoBehaviour
 		{
 			for (int y = 0; y < height; y++)
 			{
-				if (grid[x, y].cellType == CellType.wall) // Draw walls
+                
+        
+                if (grid[x, y].cellType == CellType.wall) // Draw walls
 				{	
+
 					GameObject wall = Instantiate(wallPrefab, new Vector2(x * cellSize + mazeParentObj.position.x, y * cellSize + mazeParentObj.position.y), Quaternion.identity);
 					
 					wall.transform.parent = mazeParentObj.transform;
